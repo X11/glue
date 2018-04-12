@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"os"
+	"path/filepath"
 
 	"github.com/segmentio/glue"
 	"github.com/segmentio/glue/log"
@@ -71,10 +72,18 @@ func main() {
 		path = args[0]
 	}
 
-	err := walker.Walk(glue.Directions{
+	absOut, err := filepath.Abs(*out)
+	if err != nil {
+		log.Print("Could not derive package name from out path")
+		os.Exit(2)
+	}
+	pkgName := filepath.Base(absOut)
+
+	err = walker.Walk(glue.Directions{
 		Path:    path,
 		Name:    *name,
 		Service: *service,
+		Package: pkgName,
 	})
 	if err != nil {
 		os.Exit(2)

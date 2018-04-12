@@ -28,6 +28,8 @@ type Directions struct {
 	Name string
 	// Service is the name of the RPC service. (e.g. `Math` in `Math.Sum`)
 	Service string
+	// Package is the name which is used in the generated sub
+	Package string
 }
 
 // Walk is the logical entrypoint for Glue. It walks the source code and asks
@@ -46,7 +48,7 @@ func (w *Walker) Walk(directions Directions) error {
 		wg.Add(1)
 		go func(p *loader.PackageInfo) {
 			defer wg.Done()
-			w.walkPackage(p, directions.Name, directions.Service)
+			w.walkPackage(p, directions.Name, directions.Service, directions.Package)
 		}(pkg)
 	}
 
@@ -54,7 +56,7 @@ func (w *Walker) Walk(directions Directions) error {
 	return nil
 }
 
-func (w *Walker) walkPackage(pkg *loader.PackageInfo, decl, service string) error {
+func (w *Walker) walkPackage(pkg *loader.PackageInfo, decl, service string, pkgName string) error {
 	visitor := NewVisitor(VisitorConfig{
 		Pkg:         pkg,
 		Provider:    w.Provider,
@@ -71,7 +73,7 @@ func (w *Walker) walkPackage(pkg *loader.PackageInfo, decl, service string) erro
 		ident := fmt.Sprintf("%sClient", service)
 		src, err := generator.Generate(generator.GenerateInput{
 			Provider:    w.Provider,
-			PackageName: "client",
+			PackageName: pkgName,
 			Service:     service,
 			Funcs:       funcs,
 		})
